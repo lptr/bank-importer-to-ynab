@@ -5,9 +5,20 @@
   </div>
   <div>
     <table>
+      <thead>
+        <tr>
+          <th>Index</th>
+          <th>Date</th>
+          <th>Payee</th>
+          <th>Category</th>
+          <th>Memo</th>
+          <th>Outflow</th>
+          <th>Inflow</th>
+        </tr>
+      </thead>
       <tbody>
         <tr v-for="(transaction, index) in transactions" :key="transaction.id">
-          <td>{{ index }}</td>
+          <td>{{ index + 1 }}</td>
           <td>{{ transaction.date }}</td>
           <td>{{ transaction.payee }}</td>
           <td>{{ transaction.category }}</td>
