@@ -95,7 +95,7 @@ function parseWiseDate(date: string): Date {
                     row[10] as string,
                     row[11] as string,
                     row[13] as string,
-                    'Unknown',
+                    'Wise',
                   ].find((item: string) => item) as string,
                   '',
                   row[4] as string,
