@@ -54,12 +54,12 @@ function parseWiseDate(date: string): Date {
         const text = e.target?.result as string;
         Papa.parse(text, {
           delimiter: ',',
-          complete: (csv: Papa.ParseResult<any[][]>) => {
+          complete: (csv: Papa.ParseResult<unknown[][]>) => {
             const csvRows = csv.data;
             csvRows.shift();
             this.transactions = csvRows
-              .filter((row: any[]) => row[0] !== '')
-              .map((row: any[]) => {
+              .filter((row: unknown[]) => row[0] as string !== '')
+              .map((row: unknown[]) => {
                 console.log(row);
                 // 0: "TransferWise ID"
                 // 1: "Date"
@@ -77,13 +77,19 @@ function parseWiseDate(date: string): Date {
                 // 13: "Merchant"
                 // 14: "Card Last Four Digits"
                 // 15: "Total fees"
+                const amount = row[2] as number;
                 return new Transaction(
-                  parseWiseDate(row[1]),
-                  [row[10], row[11], row[13]].find((item: string) => item),
+                  parseWiseDate(row[1] as string),
+                  [
+                    row[10] as string,
+                    row[11] as string,
+                    row[13] as string,
+                    'Unknown',
+                  ].find((item: string) => item) as string,
                   '',
-                  row[4],
-                  row[2] < 0 ? -row[2] : 0,
-                  row[2] >= 0 ? row[2] : 0,
+                  row[4] as string,
+                  amount < 0 ? -amount : 0,
+                  amount >= 0 ? amount : 0,
                 );
               });
           },
