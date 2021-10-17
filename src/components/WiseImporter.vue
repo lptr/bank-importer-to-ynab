@@ -88,20 +88,18 @@ function parseWiseDate(date: string): Date {
                 // 13: "Merchant"
                 // 14: "Card Last Four Digits"
                 // 15: "Total fees"
+                const date = parseWiseDate(row[1] as string);
                 const amount = row[2] as number;
-                return new Transaction(
-                  parseWiseDate(row[1] as string),
-                  [
-                    row[10] as string,
-                    row[11] as string,
-                    row[13] as string,
-                    'Wise',
-                  ].find((item: string) => item) as string,
-                  '',
-                  row[4] as string,
-                  amount < 0 ? -amount : 0,
-                  amount >= 0 ? amount : 0,
-                );
+                const payee = [
+                  row[10] as string,
+                  row[11] as string,
+                  row[13] as string,
+                  'Wise',
+                ].find((item: string) => item) as string;
+                const description = row[4] as string;
+                const outflow = amount < 0 ? -amount : 0;
+                const inflow = amount >= 0 ? amount : 0;
+                return new Transaction(date, payee, '', description, outflow, inflow);
               });
           },
         });
