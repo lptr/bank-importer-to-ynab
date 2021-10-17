@@ -3,18 +3,50 @@
     <h1>Wise importer</h1>
     <input type="file" @change="onFileChange" />
   </div>
+  <div>
+    <table>
+      <tbody>
+        <tr v-for="(transaction, index) in transactions" :key="transaction.id">
+          <td>{{ index }}</td>
+          <td>{{ transaction.date }}</td>
+          <td>{{ transaction.payee }}</td>
+          <td>{{ transaction.category }}</td>
+          <td>{{ transaction.memo }}</td>
+          <td>{{ transaction.outflow }}</td>
+          <td>{{ transaction.inflow }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </template>
 
 <script lang="ts">
-import { Options, Vue } from 'vue-class-component';
 import * as Papa from 'papaparse';
+import { Options, Vue } from 'vue-class-component';
+import Transaction from './Transaction';
+
+type FileEventTarget = EventTarget & { files: FileList };
+
+function parseWiseDate(date: string): Date {
+  const matcher = /(\d\d)-(\d\d)-(\d{4})/.exec(date);
+  if (!matcher) {
+    throw new Error(`Invalid date: ${date}`);
+  }
+  return new Date(+matcher[3], +matcher[2] - 1, +matcher[1]);
+}
 
 @Options({
+  data() {
+    return {
+      transactions: [],
+    };
+  },
   props: {
   },
   methods: {
-    onFileChange(event: any) {
-      const file = event.target.files[0];
+    onFileChange(event: Event) {
+      const target = event.target as FileEventTarget;
+      const file = target.files[0];
       console.log(file);
       const reader = new FileReader();
       reader.readAsText(file, 'UTF-8');
@@ -22,21 +54,38 @@ import * as Papa from 'papaparse';
         const text = e.target?.result as string;
         Papa.parse(text, {
           delimiter: ',',
-          complete: (csv: Papa.ParseResult<any>) => {
+          complete: (csv: Papa.ParseResult<any[][]>) => {
             const csvRows = csv.data;
             csvRows.shift();
-            console.log(csvRows);
-            // const transactions: Transaction[] = [];
-            // for (let csvRow of csvRows) {
-            //   if (csvRow[0] === "") {
-            //     break;
-            //   }
-            //   const transaction = new Transaction(
-            //       csvRow, (amount: number, currency: string, date: string) => 1234);
-            //   console.log(transaction);
-            //   transactions.push(transaction);
-            // }
-            // this.transactions = transactions;
+            this.transactions = csvRows
+              .filter((row: any[]) => row[0] !== '')
+              .map((row: any[]) => {
+                console.log(row);
+                // 0: "TransferWise ID"
+                // 1: "Date"
+                // 2: "Amount"
+                // 3: "Currency"
+                // 4: "Description"
+                // 5: "Payment Reference"
+                // 6: "Running Balance"
+                // 7: "Exchange From"
+                // 8: "Exchange To"
+                // 9: "Exchange Rate"
+                // 10: "Payer Name"
+                // 11: "Payee Name"
+                // 12: "Payee Account Number"
+                // 13: "Merchant"
+                // 14: "Card Last Four Digits"
+                // 15: "Total fees"
+                return new Transaction(
+                  parseWiseDate(row[1]),
+                  [row[10], row[11], row[13]].find((item: string) => item),
+                  '',
+                  row[4],
+                  row[2] < 0 ? -row[2] : 0,
+                  row[2] >= 0 ? row[2] : 0,
+                );
+              });
           },
         });
       };
