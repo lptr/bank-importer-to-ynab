@@ -7,6 +7,7 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
+import * as Papa from 'papaparse';
 
 @Options({
   props: {
@@ -15,10 +16,30 @@ import { Options, Vue } from 'vue-class-component';
     onFileChange(event: any) {
       const file = event.target.files[0];
       console.log(file);
-      // const reader = new FileReader();
-      // reader.onload = (e: any) => {
-      //   console.log(e.target.result);
-      // };
+      const reader = new FileReader();
+      reader.readAsText(file, 'UTF-8');
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        const text = e.target?.result as string;
+        Papa.parse(text, {
+          delimiter: ',',
+          complete: (csv: Papa.ParseResult<any>) => {
+            const csvRows = csv.data;
+            csvRows.shift();
+            console.log(csvRows);
+            // const transactions: Transaction[] = [];
+            // for (let csvRow of csvRows) {
+            //   if (csvRow[0] === "") {
+            //     break;
+            //   }
+            //   const transaction = new Transaction(
+            //       csvRow, (amount: number, currency: string, date: string) => 1234);
+            //   console.log(transaction);
+            //   transactions.push(transaction);
+            // }
+            // this.transactions = transactions;
+          },
+        });
+      };
     },
   },
 })
