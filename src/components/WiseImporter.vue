@@ -1,11 +1,16 @@
 <template>
   <div>
     <h1>Wise importer</h1>
-    <input type="file" @change="onFileChange" />
   </div>
   <div>
     <label for="wiseApiKey">Wise API key</label>
     <input id="wiseApiKey" v-model="wiseApiKey" />
+  </div>
+  <div>
+    <input type="file" @change="onFileChange" :disabled="!wiseApiKey" />
+  </div>
+  <div>
+    <button @click="download" :disabled="transactions.length === 0">Download</button>
   </div>
   <div>
     <table>
@@ -37,6 +42,7 @@
 
 <script lang="ts">
 import * as Papa from 'papaparse';
+import { saveAs } from 'file-saver';
 import axios from 'axios';
 import { Options, Vue } from 'vue-class-component';
 import Transaction from './Transaction';
@@ -156,9 +162,7 @@ async function calculateHufAmount(date: Date, row: unknown[], wiseApiKey: string
                     ]
                       .filter((item: string) => item)
                       .join(' / ');
-                    const outflow = amount < 0 ? -amount : 0;
-                    const inflow = amount >= 0 ? amount : 0;
-                    return new Transaction(date, payee, '', description, outflow, inflow);
+                    return new Transaction(date, payee, '', description, amount);
                   });
               });
             Promise.all(transactionPromises)
@@ -168,6 +172,16 @@ async function calculateHufAmount(date: Date, row: unknown[], wiseApiKey: string
           },
         });
       };
+    },
+    download() {
+      const ynabTransactions = this.transactions
+        .map((transaction: Transaction) => transaction.toYnab());
+      ynabTransactions.unshift(['Date', 'Payee', 'Category', 'Memo', 'Outflow', 'Inflow']);
+      const csvText = Papa.unparse(ynabTransactions, {
+        delimiter: ',',
+      });
+      const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8' });
+      saveAs(blob, 'ynab-import.csv');
     },
   },
 })
