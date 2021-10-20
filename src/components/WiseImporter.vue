@@ -148,15 +148,14 @@ async function calculateHufAmount(date: Date, row: unknown[], wiseApiKey: string
                     ]
                       .filter((item: string) => item)
                       .join(' / ') || 'Wise internal';
-                    let description = [
+                    const cardNo = row[14] as string;
+                    const description = [
                       row[4] as string,
                       row[5] as string,
-                    ].filter((item: string) => item)
+                      cardNo ? `(Card: ***${cardNo})` : '',
+                    ]
+                      .filter((item: string) => item)
                       .join(' / ');
-                    const cardNo = row[14] as string;
-                    if (cardNo) {
-                      description += ` (Card: ${cardNo})`;
-                    }
                     const outflow = amount < 0 ? -amount : 0;
                     const inflow = amount >= 0 ? amount : 0;
                     return new Transaction(date, payee, '', description, outflow, inflow);
