@@ -4,6 +4,10 @@
     <input type="file" @change="onFileChange" />
   </div>
   <div>
+    <label for="wiseApiKey">Wise API key</label>
+    <input id="wiseApiKey" v-model="wiseApiKey" />
+  </div>
+  <div>
     <table>
       <thead>
         <tr>
@@ -46,7 +50,7 @@ function parseWiseDate(date: string): Date {
   return new Date(+matcher[3], +matcher[2] - 1, +matcher[1]);
 }
 
-function calculateHufAmount(row: unknown[]) {
+function calculateHufAmount(row: unknown[], wiseApiKey: string) {
   const originalAmount = row[2] as number;
   const currency = row[3] as string;
   // Has the transaction happen in HUF?
@@ -76,6 +80,7 @@ function calculateHufAmount(row: unknown[]) {
 @Options({
   data() {
     return {
+      wiseApiKey: '',
       transactions: [],
     };
   },
@@ -116,7 +121,7 @@ function calculateHufAmount(row: unknown[]) {
                 // 15: "Total fees"
                 console.log(index, row);
                 const date = parseWiseDate(row[1] as string);
-                const amount = calculateHufAmount(row);
+                const amount = calculateHufAmount(row, this.wiseApiKey);
                 const payee = [
                   row[10] as string,
                   row[11] as string,
