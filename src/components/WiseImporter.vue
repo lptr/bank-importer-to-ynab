@@ -125,7 +125,11 @@ function calculateHufAmount(row: unknown[]) {
                 ]
                   .filter((item: string) => item)
                   .join(' / ') || 'Wise internal';
-                let description = row[4] as string;
+                let description = [
+                  row[4] as string,
+                  row[5] as string,
+                ].filter((item: string) => item)
+                  .join(' / ');
                 const cardNo = row[14] as string;
                 if (cardNo) {
                   description += ` (Card: ${cardNo})`;
