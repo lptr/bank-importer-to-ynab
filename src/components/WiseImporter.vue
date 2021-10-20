@@ -7,10 +7,11 @@
     <input id="wiseApiKey" v-model="wiseApiKey" />
   </div>
   <div>
-    <input type="file" @change="onFileChange" :disabled="!wiseApiKey" />
+    <label for="upload">Upload Wise CSV</label>
+    <input id="upload" type="file" @change="upload" :disabled="!wiseApiKey" />
   </div>
   <div>
-    <button @click="download" :disabled="transactions.length === 0">Download</button>
+    <button @click="download" :disabled="transactions.length === 0">Download YNAB CSV</button>
   </div>
   <div>
     <table>
@@ -19,21 +20,17 @@
           <th>Index</th>
           <th>Date</th>
           <th>Payee</th>
-          <th>Category</th>
           <th>Memo</th>
-          <th>Outflow</th>
-          <th>Inflow</th>
+          <th>Amount</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(transaction, index) in transactions" :key="transaction.id">
-          <td>{{ index + 1 }}</td>
-          <td>{{ transaction.date }}</td>
+          <td class="index">{{ index + 1 }}</td>
+          <td>{{ transaction.date.toLocaleDateString() }}</td>
           <td>{{ transaction.payee }}</td>
-          <td>{{ transaction.category }}</td>
           <td>{{ transaction.memo }}</td>
-          <td>{{ transaction.outflow }}</td>
-          <td>{{ transaction.inflow }}</td>
+          <td class="amount">{{ transaction.amount.toFixed(2) }} HUF</td>
         </tr>
       </tbody>
     </table>
@@ -104,7 +101,7 @@ async function calculateHufAmount(date: Date, row: unknown[], wiseApiKey: string
   props: {
   },
   methods: {
-    onFileChange(event: Event) {
+    upload(event: Event) {
       const target = event.target as FileEventTarget;
       const file = target.files[0];
       console.log(file);
@@ -198,5 +195,13 @@ li {
 }
 a {
   color: #42b983;
+}
+
+td.index {
+  text-align: right;
+}
+
+td.amount {
+  text-align: right;
 }
 </style>
