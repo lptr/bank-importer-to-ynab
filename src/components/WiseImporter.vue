@@ -114,9 +114,11 @@ function calculateHufAmount(row: unknown[]) {
                 const payee = [
                   row[10] as string,
                   row[11] as string,
+                  row[12] as string,
                   row[13] as string,
-                  'Wise',
-                ].find((item: string) => item) as string;
+                ]
+                  .filter((item: string) => item)
+                  .join(' / ') || 'Wise internal';
                 const description = row[4] as string;
                 const outflow = amount < 0 ? -amount : 0;
                 const inflow = amount >= 0 ? amount : 0;
