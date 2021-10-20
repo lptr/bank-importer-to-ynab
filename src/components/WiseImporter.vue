@@ -37,6 +37,7 @@
 
 <script lang="ts">
 import * as Papa from 'papaparse';
+import axios from 'axios';
 import { Options, Vue } from 'vue-class-component';
 import Transaction from './Transaction';
 
@@ -50,7 +51,13 @@ function parseWiseDate(date: string): Date {
   return new Date(+matcher[3], +matcher[2] - 1, +matcher[1]);
 }
 
-function calculateHufAmount(row: unknown[], wiseApiKey: string) {
+function toYnabDate(date: Date): string {
+  const month = date.getMonth() < 9 ? `0${date.getMonth() + 1}` : `${date.getMonth() + 1}`;
+  const day = date.getDate() < 10 ? `0${date.getDate()}` : `${date.getDate()}`;
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+async function calculateHufAmount(date: Date, row: unknown[], wiseApiKey: string) {
   const originalAmount = row[2] as number;
   const currency = row[3] as string;
   // Has the transaction happen in HUF?
@@ -73,8 +80,18 @@ function calculateHufAmount(row: unknown[], wiseApiKey: string) {
   }
   // The transaction hasn't happened in HUF, nor was it converted to HUF
   // We need to look up the conversion rate
-  // TODO Look up conversion
-  return originalAmount;
+  const url = `https://api.wise.com/v1/rates?source=${currency}&target=HUF&time=${toYnabDate(date)}`;
+  const rate = await axios.get(url, {
+    headers: {
+      Authorization: `Bearer ${wiseApiKey}`,
+    },
+  })
+    .then((response: any) => response.data[0].rate)
+    .catch((error: any) => {
+      console.error(error);
+    });
+  console.log(rate);
+  return originalAmount * rate;
 }
 
 @Options({
@@ -100,7 +117,7 @@ function calculateHufAmount(row: unknown[], wiseApiKey: string) {
           complete: (csv: Papa.ParseResult<unknown[][]>) => {
             const csvRows = csv.data;
             csvRows.shift();
-            this.transactions = csvRows
+            const transactionPromises: Promise<Transaction>[] = csvRows
               .filter((row: unknown[]) => row[0] as string !== '')
               .map((row: unknown[], index: number) => {
                 // 0: "TransferWise ID"
@@ -121,27 +138,33 @@ function calculateHufAmount(row: unknown[], wiseApiKey: string) {
                 // 15: "Total fees"
                 console.log(index, row);
                 const date = parseWiseDate(row[1] as string);
-                const amount = calculateHufAmount(row, this.wiseApiKey);
-                const payee = [
-                  row[10] as string,
-                  row[11] as string,
-                  row[12] as string,
-                  row[13] as string,
-                ]
-                  .filter((item: string) => item)
-                  .join(' / ') || 'Wise internal';
-                let description = [
-                  row[4] as string,
-                  row[5] as string,
-                ].filter((item: string) => item)
-                  .join(' / ');
-                const cardNo = row[14] as string;
-                if (cardNo) {
-                  description += ` (Card: ${cardNo})`;
-                }
-                const outflow = amount < 0 ? -amount : 0;
-                const inflow = amount >= 0 ? amount : 0;
-                return new Transaction(date, payee, '', description, outflow, inflow);
+                return calculateHufAmount(date, row, this.wiseApiKey)
+                  .then((amount: number) => {
+                    const payee = [
+                      row[10] as string,
+                      row[11] as string,
+                      row[12] as string,
+                      row[13] as string,
+                    ]
+                      .filter((item: string) => item)
+                      .join(' / ') || 'Wise internal';
+                    let description = [
+                      row[4] as string,
+                      row[5] as string,
+                    ].filter((item: string) => item)
+                      .join(' / ');
+                    const cardNo = row[14] as string;
+                    if (cardNo) {
+                      description += ` (Card: ${cardNo})`;
+                    }
+                    const outflow = amount < 0 ? -amount : 0;
+                    const inflow = amount >= 0 ? amount : 0;
+                    return new Transaction(date, payee, '', description, outflow, inflow);
+                  });
+              });
+            Promise.all(transactionPromises)
+              .then((transactions: Transaction[]) => {
+                this.transactions = transactions;
               });
           },
         });
