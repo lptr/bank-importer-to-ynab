@@ -46,6 +46,27 @@ function parseWiseDate(date: string): Date {
   return new Date(+matcher[3], +matcher[2] - 1, +matcher[1]);
 }
 
+function calculateHufAmount(row: unknown[]) {
+  let currency;
+  const originalAmount = row[2] as number;
+  if (row[8] === 'HUF') {
+    // Exchanging to HUF
+    if ((row[0] as string).startsWith('CARD-')) {
+      // This is a card transaction
+      const matcher = (row[4] as string).match(/Card transaction of ([\d.]+) HUF issued by .*/);
+      if (matcher) {
+        return +matcher[1] * Math.sign(originalAmount);
+      }
+    }
+    const exchangeRate = row[9] as number;
+    return originalAmount * exchangeRate;
+  }
+  if (currency) {
+    // Do nothing
+  }
+  return originalAmount;
+}
+
 @Options({
   data() {
     return {
@@ -70,8 +91,7 @@ function parseWiseDate(date: string): Date {
             csvRows.shift();
             this.transactions = csvRows
               .filter((row: unknown[]) => row[0] as string !== '')
-              .map((row: unknown[]) => {
-                console.log(row);
+              .map((row: unknown[], index: number) => {
                 // 0: "TransferWise ID"
                 // 1: "Date"
                 // 2: "Amount"
@@ -88,8 +108,9 @@ function parseWiseDate(date: string): Date {
                 // 13: "Merchant"
                 // 14: "Card Last Four Digits"
                 // 15: "Total fees"
+                console.log(index, row);
                 const date = parseWiseDate(row[1] as string);
-                const amount = row[2] as number;
+                const amount = calculateHufAmount(row);
                 const payee = [
                   row[10] as string,
                   row[11] as string,
