@@ -1,18 +1,19 @@
 <template>
-  <div>
-    <h1>Wise importer</h1>
-  </div>
-  <div>
-    <label for="wiseApiKey">Wise API key</label>
-    <input id="wiseApiKey" v-model="wiseApiKey" />
-  </div>
-  <div>
-    <label for="upload">Upload Wise CSV</label>
-    <input id="upload" type="file" @change="upload" :disabled="!wiseApiKey" />
-  </div>
-  <div>
-    <button @click="download" :disabled="transactions.length === 0">Download YNAB CSV</button>
-  </div>
+  <h1>Wise importer</h1>
+  <ol>
+    <li>
+      <label for="wiseApiKey">Wise API key</label>
+      <input id="wiseApiKey" v-model="wiseApiKey" />
+      <span>(Find the key in LastPass under "YNAB importer")</span>
+    </li>
+    <li>
+      <label for="upload">Upload Wise CSV</label>
+      <input id="upload" type="file" @change="upload" :disabled="!wiseApiKey" />
+    </li>
+    <li>
+      <button @click="download" :disabled="transactions.length === 0">Download YNAB CSV</button>
+    </li>
+  </ol>
   <div>
     <table>
       <thead>
@@ -182,21 +183,6 @@ export default class HelloWorld extends Vue {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-
 td.index {
   text-align: right;
 }
