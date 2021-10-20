@@ -57,12 +57,6 @@ function parseWiseDate(date: string): Date {
   return new Date(+matcher[3], +matcher[2] - 1, +matcher[1]);
 }
 
-function toYnabDate(date: Date): string {
-  const month = date.getMonth() < 9 ? `0${date.getMonth() + 1}` : `${date.getMonth() + 1}`;
-  const day = date.getDate() < 10 ? `0${date.getDate()}` : `${date.getDate()}`;
-  return `${date.getFullYear()}-${month}-${day}`;
-}
-
 async function calculateHufAmount(date: Date, row: unknown[], wiseApiKey: string) {
   const originalAmount = row[2] as number;
   const currency = row[3] as string;
@@ -86,7 +80,7 @@ async function calculateHufAmount(date: Date, row: unknown[], wiseApiKey: string
   }
   // The transaction hasn't happened in HUF, nor was it converted to HUF
   // We need to look up the conversion rate
-  const url = `https://api.wise.com/v1/rates?source=${currency}&target=HUF&time=${toYnabDate(date)}`;
+  const url = `https://api.wise.com/v1/rates?source=${currency}&target=HUF&time=${Transaction.toYnabDate(date)}`;
   const rate = await axios.get(url, {
     headers: {
       Authorization: `Bearer ${wiseApiKey}`,
