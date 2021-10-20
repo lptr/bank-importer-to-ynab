@@ -47,9 +47,15 @@ function parseWiseDate(date: string): Date {
 }
 
 function calculateHufAmount(row: unknown[]) {
-  let currency;
   const originalAmount = row[2] as number;
-  if (row[8] === 'HUF') {
+  const currency = row[3] as string;
+  // Has the transaction happen in HUF?
+  if (currency === 'HUF') {
+    return originalAmount;
+  }
+  const exchangeTo = row[8] as string;
+  // Has the transaction happen in HUF?
+  if (exchangeTo === 'HUF') {
     // Exchanging to HUF
     if ((row[0] as string).startsWith('CARD-')) {
       // This is a card transaction
@@ -61,9 +67,9 @@ function calculateHufAmount(row: unknown[]) {
     const exchangeRate = row[9] as number;
     return originalAmount * exchangeRate;
   }
-  if (currency) {
-    // Do nothing
-  }
+  // The transaction hasn't happened in HUF, nor was it converted to HUF
+  // We need to look up the conversion rate
+  // TODO Look up conversion
   return originalAmount;
 }
 
@@ -119,7 +125,11 @@ function calculateHufAmount(row: unknown[]) {
                 ]
                   .filter((item: string) => item)
                   .join(' / ') || 'Wise internal';
-                const description = row[4] as string;
+                let description = row[4] as string;
+                const cardNo = row[14] as string;
+                if (cardNo) {
+                  description += ` (Card: ${cardNo})`;
+                }
                 const outflow = amount < 0 ? -amount : 0;
                 const inflow = amount >= 0 ? amount : 0;
                 return new Transaction(date, payee, '', description, outflow, inflow);
