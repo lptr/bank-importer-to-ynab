@@ -112,11 +112,12 @@ async function calculateHufAmount(date: Date, row: unknown[], wiseApiKey: string
         const text = e.target?.result as string;
         Papa.parse(text, {
           delimiter: ',',
+          dynamicTyping: true,
           complete: (csv: Papa.ParseResult<unknown[][]>) => {
             const csvRows = csv.data;
             csvRows.shift();
             const transactionPromises: Promise<Transaction>[] = csvRows
-              .filter((row: unknown[]) => row[0] as string !== '')
+              .filter((row: unknown[]) => row[0] !== null && row[0] as string !== '')
               .map((row: unknown[], index: number) => {
                 // 0: "TransferWise ID"
                 // 1: "Date"
